@@ -7,9 +7,7 @@ RUN echo 'export PATH=$PATH:/go/bin' >> ~/.bashrc
 
 WORKDIR $ROOT_PATH
 
-RUN go get \
-  golang.org/x/tools/cmd/godoc \
-  github.com/golang/lint/golint
+RUN go get github.com/golang/lint/golint
 
 ADD . $ROOT_PATH
 

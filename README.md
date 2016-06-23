@@ -106,7 +106,6 @@ package main
 import (
 	"github.com/handwritingio/deckard-bot/bot"
 
-  "github.com/handwritingio/deckard-bot/plugins"
 	"github.com/handwritingio/deckard-bot/plugins/cats"
 	"github.com/handwritingio/deckard-bot/plugins/dice"
 	"github.com/handwritingio/deckard-bot/plugins/principles"
@@ -158,4 +157,4 @@ Version numbers for this package will follow standard
 ## Issues
 
 Please open an issue on [Github](https://github.com/handwritingio/deckard-bot/issues)
-and we will look into it as soon as possible
+and we will look into it as soon as possible.
