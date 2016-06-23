@@ -10,5 +10,5 @@ AWS Credentials are configured with env `AWS_SECRET_ACCESS_KEY` and `AWS_ACCESS_
 | Cats          | `!cat`                     | None |
 | Dice          | `!dice`                    | None |
 | Tableflip     | `!tableflip` `!tablechill` | None |
-| Write         | `!write`                   | <ul><li>env `HANDWRITINGIO_API_URL="url with authentication"`</li><li>env `S3_BUCKET="s3 bucket for storing images"`</li><li>AWS Credentials with access to `S3_BUCKET`</li></ul> |
+| Write         | `!write`                   | Plugin settings: <ul><li>`HandwritingAPIURL="url with authentication"`</li><li>`S3Bucket="s3 bucket for storing images"`</li><li>AWS Credentials with access to `S3Bucket`</li></ul> |
 | Principles    | `!principle`               | None |

@@ -2,10 +2,10 @@
 Package write renders a PNG using the Handwriting.io API.
 
 To use this plugin, you will need to create an account at Handwriting.io, create
-a token, and then add the following environment variable:
+a token, and then add the following when initializing the plugin:
 
- HANDWRITINGIO_API_URL=https://token:secret@api.handwriting.io
- S3_BUCKET=s3 bucket to store and link to rendered images
+ HandwritingioAPIURL=https://token:secret@api.handwriting.io
+ S3Bucket=s3 bucket to store and link to rendered images
 */
 package write
 
@@ -33,6 +33,7 @@ import (
 // Plugin ...
 type Plugin struct {
 	HandwritingioAPIURL string
+	S3Bucket            string
 }
 
 var (
@@ -55,12 +56,15 @@ func (p Plugin) Command() []string {
 // OnInit returns an error if the plugin could not be started
 func (p Plugin) OnInit() error {
 
-	s := p.HandwritingioAPIURL
-	if s == "" {
+	if p.HandwritingioAPIURL == "" {
 		return errors.New("HandwritingAPIURL must be set to use this plugin!")
 	}
 
-	u, err := url.Parse(s)
+	if p.S3Bucket == "" {
+		return errors.New("S3Bucket must be set to use this plugin!")
+	}
+
+	u, err := url.Parse(p.HandwritingioAPIURL)
 	if err != nil {
 		return err
 	}
@@ -94,7 +98,7 @@ func (p Plugin) HandleMessage(in message.Basic) (out message.Basic) {
 	handwritingID := chunks[1]
 	text := chunks[2]
 
-	url, err := write(text, handwritingID)
+	url, err := p.write(text, handwritingID)
 	if err != nil {
 		out.Text = "error writing your message: " + err.Error()
 		return
@@ -156,17 +160,14 @@ func render(text string, handwritingID string) ([]byte, error) {
 
 // upload uploads the rendered image to the S3 bucket and returns
 // the URL where its uploaded to.
-func upload(img []byte) (string, error) {
-	if config.S3Bucket == "" {
-		return "", fmt.Errorf("S3_BUCKET variable not configured")
-	}
+func (p *Plugin) upload(img []byte) (string, error) {
 	reader := bytes.NewReader(img)
 	timestamp := time.Now().Format("2006-01-02_150405.000")
 
 	uploader := s3manager.NewUploader(awssession.New(&aws.Config{Region: aws.String(config.AWSRegion)}))
 	out, err := uploader.Upload(
 		&s3manager.UploadInput{
-			Bucket:      aws.String(config.S3Bucket),
+			Bucket:      aws.String(p.S3Bucket),
 			ACL:         aws.String("public-read"),
 			ContentType: aws.String("image/png"),
 			Key:         aws.String(timestamp + ".png"),
@@ -177,7 +178,7 @@ func upload(img []byte) (string, error) {
 }
 
 // write returns the S3 url of the rendered text
-func write(text, handwritingID string) (url string, err error) {
+func (p *Plugin) write(text, handwritingID string) (url string, err error) {
 	log.Println("Writing something")
 	if len(handwritingIDs) < 1 {
 		return "", fmt.Errorf("no handwritings available")
@@ -192,5 +193,5 @@ func write(text, handwritingID string) (url string, err error) {
 	}
 	log.Printf("rendered %d bytes\n", len(img))
 
-	return upload(img)
+	return p.upload(img)
 }
