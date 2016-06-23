@@ -1,3 +1,13 @@
+/*
+Package slack is a Connection to the Slack Real Time Messaging API
+(https://api.slack.com/rtm). To use this connection, you will need
+to create a custom bot user. See https://api.slack.com/bot-users#custom_bot_users.
+
+Once you've created a bot user, you will need to initialize the Slack connection
+using the API key for this bot user.
+
+ slackConnection := NewConnection("MySlackBotAPIKey")
+*/
 package slack
 
 import (
