@@ -1,6 +1,6 @@
 # deckard-bot
 [![CircleCI](https://circleci.com/gh/handwritingio/deckard-bot.svg?style=shield)](https://circleci.com/gh/handwritingio/deckard-bot)
-[![GoDoc](https://godoc.org/github.com/handwritingio/deckard-bot?status.png)](https://godoc.org/github.com/handwritingio/deckard-bot)
+[![GoDoc](https://godoc.org/github.com/handwritingio/deckard-bot?status.svg)](https://godoc.org/github.com/handwritingio/deckard-bot)
 
 Welcome to the home to [Handwriting.io](https://handwriting.io)'s chatbot, **Deckard**.
 

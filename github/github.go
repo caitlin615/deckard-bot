@@ -1,3 +1,4 @@
+// Package github is a wrapper around the go Github client and API
 package github
 
 import (

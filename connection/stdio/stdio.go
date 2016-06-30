@@ -1,3 +1,4 @@
+// Package stdio is a Connection to a stdin/stdout Terminal session
 package stdio
 
 import (
