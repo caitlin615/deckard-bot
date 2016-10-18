@@ -70,8 +70,26 @@ func (c *Client) CheckGithubRateLimit() {
 // checkGithubRepo takes a repo as a string you'd like to check
 // and confirms whether or not the repo exists and the Client has access to it
 func (c *Client) checkGithubRepo(org, repo string) bool {
-	repos, _, _ := c.client.Repositories.ListByOrg(org, nil)
-	for _, r := range repos {
+	opt := &github.RepositoryListByOrgOptions{
+		ListOptions: github.ListOptions{PerPage: 10},
+	}
+	// get all pages of results
+	// https://godoc.org/github.com/google/go-github/github#hdr-Pagination
+	var allRepos []*github.Repository
+	for {
+		repos, resp, err := c.client.Repositories.ListByOrg(org, opt)
+		if err != nil {
+			log.Error(err)
+			break
+		}
+		allRepos = append(allRepos, repos...)
+		if resp.NextPage == 0 {
+			break
+		}
+		opt.ListOptions.Page = resp.NextPage
+	}
+	for _, r := range allRepos {
+		log.Printf("r.Name: %s\n", *r.Name)
 		if *r.Name == repo {
 			return true
 		}
@@ -112,11 +130,24 @@ func (c *Client) checkRepoAndBranch(org, repo, branch string) error {
 	if !c.checkGithubRepo(org, repo) {
 		return fmt.Errorf("Github repo not found: %s", repo)
 	}
-	branches, _, err := c.client.Repositories.ListBranches(org, repo, &github.ListOptions{})
-	if err != nil {
-		return fmt.Errorf("Could not fetch branches for %s: %s", repo, err.Error())
+	opt := &github.ListOptions{
+		PerPage: 10,
 	}
-	for _, b := range branches {
+	// Page all branches
+	var allBranches []*github.Branch
+	for {
+		branches, resp, err := c.client.Repositories.ListBranches(org, repo, opt)
+		if err != nil {
+			return fmt.Errorf("Could not fetch branches for %s: %s", repo, err.Error())
+		}
+		allBranches = append(allBranches, branches...)
+		if resp.NextPage == 0 {
+			break
+		}
+		opt.Page = resp.NextPage
+	}
+
+	for _, b := range allBranches {
 		if branch == *b.Name {
 			return nil
 		}
@@ -129,16 +160,30 @@ func (c *Client) checkRepoAndBranch(org, repo, branch string) error {
 // know the github username of the person you'd like to assign the issue to.
 func (c *Client) GetGithubUsers(org string) (out string) {
 	// Get Org members
-	members, resp, err := c.client.Organizations.ListMembers(org, nil)
-	if err != nil {
-		out = "Error accessing Org membership"
+	opt := &github.ListMembersOptions{
+		ListOptions: github.ListOptions{PerPage: 10},
 	}
-	log.Debug("Github user status: " + resp.Status)
-	if resp.StatusCode != 200 {
-		out = "Bad responds from Github: " + resp.Status
+	var allUsers []*github.User
+	for {
+		users, resp, err := c.client.Organizations.ListMembers(org, opt)
+		if err != nil {
+			out = fmt.Sprintf("Could not fetch users for %s: %s", org, err.Error())
+			return
+		}
+		if resp.StatusCode != 200 {
+			out = "Bad responds from Github: " + resp.Status
+			return
+		}
+		allUsers = append(allUsers, users...)
+		if resp.NextPage == 0 {
+			break
+		}
+		opt.ListOptions.Page = resp.NextPage
 	}
+
 	s := []string{"*Here's a list of all " + org + " Github usernames:*"}
-	for _, r := range members {
+
+	for _, r := range allUsers {
 		githubUsername := github.Stringify(r.Login)
 		log.Debug("Github Username: " + githubUsername)
 		s = append(s, githubUsername)
