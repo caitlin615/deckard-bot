@@ -10,6 +10,7 @@ import (
 	"github.com/handwritingio/deckard-bot/log"
 
 	"github.com/google/go-github/github"
+	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 
@@ -19,6 +20,10 @@ type Client struct {
 }
 
 const archiveFormat = github.Tarball
+
+// Support for go-github package addition of contact
+// https://github.com/google/go-github/issues/526
+var ctx = context.Background()
 
 // NewClient creates a new Client including authentication
 func NewClient(apiKey string) *Client {
@@ -42,24 +47,24 @@ func NewClient(apiKey string) *Client {
 // from a file within a github repository. A repository and path to a file must be supplied.
 func (c *Client) GetFile(org, repo, path string) ([]byte, string, error) {
 	opt := &github.RepositoryContentGetOptions{}
-	content, _, resp, err := c.client.Repositories.GetContents(org, repo, path, opt)
+	content, _, resp, err := c.client.Repositories.GetContents(ctx, org, repo, path, opt)
 	if resp.StatusCode != 200 {
 		return nil, "", errors.New("Bad response from Github: " + resp.Status)
 	}
 	if err != nil {
 		return nil, "", err
 	}
-	decoded, err := content.Decode()
+	decoded, err := content.GetContent()
 	if err != nil {
 		return nil, "", err
 	}
-	return decoded, github.Stringify(content.DownloadURL), nil
+	return []byte(decoded), content.GetDownloadURL(), nil
 }
 
 // CheckGithubRateLimit returns the API Rate limit to the debug console
 // https://github.com/google/go-github/blob/master/examples/repos/main.go
 func (c *Client) CheckGithubRateLimit() {
-	rate, _, err := c.client.RateLimit()
+	rate, _, err := c.client.RateLimits(ctx)
 	if err != nil {
 		log.Debugf("Error fetching Github rate limit: %#v\n", err)
 	} else {
@@ -77,7 +82,7 @@ func (c *Client) checkGithubRepo(org, repo string) bool {
 	// https://godoc.org/github.com/google/go-github/github#hdr-Pagination
 	var allRepos []*github.Repository
 	for {
-		repos, resp, err := c.client.Repositories.ListByOrg(org, opt)
+		repos, resp, err := c.client.Repositories.ListByOrg(ctx, org, opt)
 		if err != nil {
 			log.Error(err)
 			break
@@ -103,20 +108,19 @@ func (c *Client) GetArchive(org, repo, branch string) (*url.URL, string, error) 
 	if err != nil {
 		return nil, "", err
 	}
-	archiveURL, commit, err := c.getArchive(org, repo, branch)
-	return archiveURL, commit, nil
+	return c.getArchive(org, repo, branch)
 }
 
 func (c *Client) getArchive(org, repo, branch string) (*url.URL, string, error) {
 	opts := github.RepositoryContentGetOptions{
 		Ref: branch,
 	}
-	archiveURL, _, err := c.client.Repositories.GetArchiveLink(org, repo, archiveFormat, &opts)
+	archiveURL, _, err := c.client.Repositories.GetArchiveLink(ctx, org, repo, archiveFormat, &opts)
 	if err != nil {
 		log.Errorf("Could not get archive URL: %s", err.Error())
 		return nil, "", err
 	}
-	b, _, err := c.client.Repositories.GetBranch(org, repo, branch)
+	b, _, err := c.client.Repositories.GetBranch(ctx, org, repo, branch)
 	if err != nil {
 		return nil, "", err
 	}
@@ -136,7 +140,7 @@ func (c *Client) checkRepoAndBranch(org, repo, branch string) error {
 	// Page all branches
 	var allBranches []*github.Branch
 	for {
-		branches, resp, err := c.client.Repositories.ListBranches(org, repo, opt)
+		branches, resp, err := c.client.Repositories.ListBranches(ctx, org, repo, opt)
 		if err != nil {
 			return fmt.Errorf("Could not fetch branches for %s: %s", repo, err.Error())
 		}
@@ -165,7 +169,7 @@ func (c *Client) GetGithubUsers(org string) (out string) {
 	}
 	var allUsers []*github.User
 	for {
-		users, resp, err := c.client.Organizations.ListMembers(org, opt)
+		users, resp, err := c.client.Organizations.ListMembers(ctx, org, opt)
 		if err != nil {
 			out = fmt.Sprintf("Could not fetch users for %s: %s", org, err.Error())
 			return
@@ -207,7 +211,7 @@ func (c *Client) CreateGithubIssue(org, repo, issue string) (out string) {
 		Body:  github.String("Issue created by the Deckard Chatbot Plugin"),
 	}
 	// Create issue
-	i, resp, err := c.client.Issues.Create(org, repo, &issueMsg)
+	i, resp, err := c.client.Issues.Create(ctx, org, repo, &issueMsg)
 	if err != nil {
 		out = fmt.Sprintf("Error occurred when creating issue: %s", err.Error())
 		return
@@ -232,6 +236,6 @@ func (c *Client) CreateGithubIssue(org, repo, issue string) (out string) {
 // Octocat is a wrapper around github Client octocat
 // prints an ASCII octocat
 func (c *Client) Octocat(message string) string {
-	octocat, _, _ := c.client.Octocat(message)
+	octocat, _, _ := c.client.Octocat(ctx, message)
 	return octocat
 }
