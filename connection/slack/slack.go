@@ -127,8 +127,6 @@ func (s *Connection) startRX(ws *websocket.Conn, rx message.BasicChannel, errorC
 				rx <- m.Basic
 				counter++
 			}
-		default:
-			log.Warn("Unhandled event: ", event.Type, string(event.Error))
 		}
 	}
 }
