@@ -26,6 +26,7 @@ type Plugin struct {
 type Principle struct {
 	Title       string
 	Description string
+	Number      int
 }
 
 var (
@@ -120,7 +121,7 @@ func (p *Plugin) HandleMessage(in message.Basic) (out message.Basic) {
 			return
 		}
 		principle := p.List[num-1]
-		out.Text = fmt.Sprintf("*%s*: %s", principle.Title, principle.Description)
+		out.Text = fmt.Sprintf("%d. *%s*: %s", principle.Number, principle.Title, principle.Description)
 
 	// Matches the command to list a principle based on a keyword (`!principle code`)
 	case rePrincipleKeyword.MatchString(in.Text):
@@ -135,7 +136,7 @@ func (p *Plugin) HandleMessage(in message.Basic) (out message.Basic) {
 			out.Text = fmt.Sprintf("Sorry, no principles match keyword `%s`", keyword)
 			return
 		}
-		out.Text = fmt.Sprintf("*%s*: %s", matchPrinciple.Title, matchPrinciple.Description)
+		out.Text = fmt.Sprintf("%d. *%s*: %s", matchPrinciple.Number, matchPrinciple.Title, matchPrinciple.Description)
 	default:
 		out.Text = p.Usage()
 	}
@@ -217,6 +218,10 @@ func buildPrinciples(data []byte) ([]*Principle, error) {
 		tmp.Description = prChunks[3]
 		list = append(list, &tmp)
 	}
+	for i, principle := range list {
+		principle.Number = i + 1
+	}
+
 	if len(list) == 0 {
 		return nil, errors.New("Unable to create list of Principles")
 	}

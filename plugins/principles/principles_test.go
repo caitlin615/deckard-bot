@@ -24,9 +24,9 @@ func ExamplePlugin_HandleMessage() {
 	// true
 	// true
 	// clever code
-	// *Build what matters*: Engineering effort is a scarce commodity. It should only be applied to problems that "move the needle" for the company.
+	// 1. *Build what matters*: Engineering effort is a scarce commodity. It should only be applied to problems that "move the needle" for the company.
 	// Sorry, the principle you requested does not exist
-	// *Clear Code Beats Clever Code*: Don't write code you can't debug at 3AM while drunk. Never name a variable 'data' or 'info'. If the implementation is hard to explain, it's a bad idea.
+	// 6. *Clear Code Beats Clever Code*: Don't write code you can't debug at 3AM while drunk. Never name a variable 'data' or 'info'. If the implementation is hard to explain, it's a bad idea.
 	// Sorry, no principles match keyword `mary had a little lamb`
 }
 
