@@ -8,7 +8,7 @@ import (
 
 func ExamplePlugin_HandleMessage() {
 	p := new(Plugin)
-	principleList, _ := buildPrinciples(principleData)
+	principleList := buildPrinciples(principleData)
 	p.List = principleList
 
 	fmt.Println(rePrinciple.MatchString("!principles"))

@@ -3,7 +3,6 @@
 package principles
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"sort"
@@ -70,9 +69,9 @@ func (p *Plugin) OnInit() error {
 		return fmt.Errorf("Error getting principles: %s", err.Error())
 	}
 	// Build PrincipleList data into struct
-	principleList, err := buildPrinciples(data)
-	if err != nil {
-		return fmt.Errorf("Error building principles: %s", err.Error())
+	principleList := buildPrinciples(data)
+	if len(principleList) == 0 {
+		return fmt.Errorf("Error building principles: no principles found")
 	}
 	// Set principles to Plugin struct
 	p.List = principleList
@@ -199,9 +198,7 @@ func getPrinciples() ([]byte, error) {
 }
 
 // buildPrinciples takes the principle data in bytes and returns a list of Principle
-func buildPrinciples(data []byte) ([]*Principle, error) {
-	list := []*Principle{}
-
+func buildPrinciples(data []byte) (list []*Principle) {
 	// Split principles by double newline (seperator between principles)
 	principles := strings.Split(string(data), "\n\n")
 
@@ -222,8 +219,5 @@ func buildPrinciples(data []byte) ([]*Principle, error) {
 		principle.Number = i + 1
 	}
 
-	if len(list) == 0 {
-		return nil, errors.New("Unable to create list of Principles")
-	}
-	return list, nil
+	return
 }
