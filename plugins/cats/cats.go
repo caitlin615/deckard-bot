@@ -22,7 +22,7 @@ var (
 	reCatsType = regexp.MustCompile("(?i)^!cat (\\w+)$")
 
 	catImgURL  = "http://thecatapi.com/api/images/get?format=src&size=med&type="
-	catFactURL = "http://catfacts-api.appspot.com/api/facts?number=1"
+	catFactURL = "https://catfact.ninja/fact"
 )
 
 // Command returns a list of commands the plugin provides
@@ -61,7 +61,12 @@ func (p Plugin) HandleMessage(in message.Basic) (out message.Basic) {
 	case "image":
 		out.Text = getCatImage("jpg")
 	case "fact":
-		out.Text = getCatFact()
+		fact := getCatFact()
+		if len(fact) == 0 {
+			out.Text = "Sorry, I was unable to retrieve a cat fact for you :crying_cat_face:."
+			return
+		}
+		out.Text = fact
 	default:
 		out.Text = p.Usage()
 	}
@@ -83,30 +88,24 @@ func (p Plugin) Name() string {
 func getCatFact() string {
 	resp, err := http.Get(catFactURL)
 	if err != nil {
-		log.Debugf("Error getting cat fact response: %s", err)
+		log.Errorf("Error getting cat fact response: %s", err)
+		return ""
 	}
 	defer resp.Body.Close()
 	raw, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Debugf("Error reading cat fact response body: %s", err)
+		log.Errorf("Error reading cat fact response body: %s", err)
+		return ""
 	}
-	facts := struct {
-		Facts   []string `json:"facts"`
-		Success string   `json:"success"`
+	factResp := struct {
+		Fact string `json:"fact"`
 	}{}
-	err = json.Unmarshal(raw, &facts)
+	err = json.Unmarshal(raw, &factResp)
 	if err != nil {
-		log.Debugf("Error unmarshaling cat json: %s", err)
+		log.Errorf("Error unmarshaling cat json: %s", err)
+		return ""
 	}
-	if facts.Success != "true" {
-		log.Debug("Cat facts json did not return success")
-	}
-
-	var s []string
-	for _, k := range facts.Facts {
-		s = append(s, k)
-	}
-	return strings.Join(s, "\n")
+	return factResp.Fact
 }
 
 // getCatImage returns a random cat git or png from the catImageURL
