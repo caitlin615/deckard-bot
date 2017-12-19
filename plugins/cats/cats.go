@@ -57,21 +57,23 @@ func (p Plugin) HandleMessage(in message.Basic) (out message.Basic) {
 
 	switch cmd {
 	case "gif":
-		out.Text = getCatImage("gif")
+		out.Text = checkResponse(cmd, getCatImage("gif"))
 	case "image":
-		out.Text = getCatImage("jpg")
+		out.Text = checkResponse(cmd, getCatImage("jpg"))
 	case "fact":
-		fact := getCatFact()
-		if len(fact) == 0 {
-			out.Text = "Sorry, I was unable to retrieve a cat fact for you :crying_cat_face:."
-			return
-		}
-		out.Text = fact
+		out.Text = checkResponse(cmd, getCatFact())
 	default:
 		out.Text = p.Usage()
 	}
 
 	return
+}
+
+func checkResponse(cmd, text string) string {
+	if len(text) == 0 {
+		return "Sorry, I was unable to retrieve a cat " + cmd + " for you :crying_cat_face:."
+	}
+	return text
 }
 
 // OnInit returns an error if the plugin could not be started
@@ -112,16 +114,19 @@ func getCatFact() string {
 func getCatImage(t string) string {
 	req, err := http.NewRequest("GET", catImgURL+t, nil)
 	if err != nil {
-		log.Debugf("Error getting cat photo request: %s", err)
+		log.Errorf("Error getting cat photo request: %s", err)
+		return ""
 	}
 	transport := http.Transport{}
 	resp, err := transport.RoundTrip(req)
 	if err != nil {
-		log.Debugf("error with cat response: %s", err)
+		log.Errorf("error with cat response: %s", err)
+		return ""
 	}
 
 	if resp.StatusCode != 200 && resp.StatusCode != 302 {
-		log.Debug("Failed with status: ", resp.Status)
+		log.Error("Failed with status: ", resp.Status)
+		return ""
 	}
 
 	return resp.Header.Get("Location")
