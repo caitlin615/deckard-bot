@@ -3,9 +3,9 @@ package log
 import (
 	"github.com/handwritingio/deckard-bot/config"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/evalphobia/logrus_sentry"
 	"github.com/getsentry/raven-go"
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
